@@ -16,24 +16,24 @@
    %********************   
    % format :  initial_state(+State) ou State est une matrice (liste de listes)
    
-
+/*
 initial_state([ [b, h, c],       % C'EST L'EXEMPLE PRIS EN COURS
                 [a, f, d],       % 
                 [g,vide,e] ]).   % h1=4,   h2=5,   f*=5
 
-
+*/
 
 % AUTRES EXEMPLES POUR LES TESTS DE  A*
 
 /*
 initial_state([ [ a, b, c],        
-                [ g, h, d],
-                [vide,f, e] ]). % h2=2, f*=2
+                [ vide, h, d],
+                [g,f, e] ]). % h2=2, f*=2*/
 
 initial_state([ [b, c, d],
                 [a,vide,g],
                 [f, h, e]  ]). % h2=10 f*=10
-			
+/*			
 initial_state([ [f, g, a],
                 [h,vide,b],
                 [d, c, e]  ]). % h2=16, f*=20
@@ -161,7 +161,7 @@ delete(N,X,[Y|L], [Y|R]) :-
    %*************
    
 heuristique(U,H) :-
-    heuristique1(U, H).  % au debut on utilise l'heuristique 1 
+    heuristique2(U, H).  % au debut on utilise l'heuristique 1 
 %   heuristique2(U, H).  % ensuite utilisez plutot l'heuristique 2  
    
    
@@ -257,18 +257,18 @@ aetoile(Pf,Pu,_):-
    empty(Pu),
    display("PAS de SOLUTION : L’ETAT FINAL N’EST PAS ACCESSIBLE !").
 
-aetoile(_,Pu,Q):-
+aetoile(Pf,Pu,Q):-
    final_state(Final),
-   suppress_min([Final, _],Pu, _),
+   suppress_min([[Fu,Hu,Gu],U],Pf,Pf2),
+   U=Final,
    affiche_solution(Q,Final).
 
 aetoile(Pf,Pu,Q):-
    suppress_min([[Fu,Hu,Gu],U],Pf,Pf2),
-   suppress([U,[Fu,Hu,Gu],_,_],Pu,Pu2),
-   %not(final_state(U)),
+   suppress([U,[Fu,Hu,Gu],Pere,Action],Pu,Pu2),
    findall(S,expand(U,Gu,S),Ls),
    loop_successors(Ls,Pu2,Pf2,Q,Puu,Pff),
-   insert(S,Q,Qf),
+   insert([U,[Fu,Hu,Gu],Pere,Action],Q,Qf),
    aetoile(Pff,Puu,Qf).
 
 expand(S,G,Suiv):-
@@ -277,29 +277,40 @@ expand(S,G,Suiv):-
    G2 is G+1,
    F2 is G2+H2,
    Suiv=[S2,[F2,H2,G2],S,Action].
-loop_successors([],_,_,_,_,_,_).
+loop_successors([],Pu,Pf,_,Pu,Pf).
 loop_successors(Ls,Pu,Q,Pf,PU,PF):-
    Ls=[S|Lsuiv],
+   loop_successors(Lsuiv,Pu,Pf,Q,Pu1,Pf1),
    S=[U,[F,H,G],_,_],
-   not(belongs(U,Q)),
-   ( belongs([Vec,U],Pu) ->
    (
-      Vec @> [F,H,G] ->
-      suppress([U,_,_,_],Pu,Pu2),
-      suppress([Vec,U],Pf,Pf2),
-      insert(S,Pu2,Puu),
-      insert([[F,H,G],U],Pf2,Pff)
-      ;
-      true
-   )
+      not(belongs([U,_,_,_],Q))->
+   ( belongs([U,Vec,_,_],Pu1) ->
+      (
+         Vec @> [F,H,G] ->
+            suppress([U,_,_,_],Pu1,Pu2),
+            suppress([Vect,U],Pf1,Pf2),
+            insert(S,Pu2,PU),
+            insert([[F,H,G],U],Pf2,PF);
+            true
+      )
    ;
-   insert(S,Pu,Puu),
-   insert([[F,H,G],U],Pf,Pff)
-   ),
-   loop_successors(Lsuiv,Puu,Pff,Q,PU,PF).
+      insert(S,Pu1,PU),
+      insert([[F,H,G],U],Pf1,PF)
+   );
+   PU = Pu1,
+   PF = Pf1
+   ).
+
+
+
+
+
 affiche_solution(_,Init):-
-   initial_state(Init).
+   initial_state(Init),
+   write_state(Init),
+   writeln('----------').
 affiche_solution(Q,Final):-
    belongs([Final,_,Pere,_],Q),
    affiche_solution(Q,Pere),
-   write(Final).
+   write_state(Final),
+   writeln('__________').
