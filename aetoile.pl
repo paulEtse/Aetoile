@@ -47,14 +47,6 @@ Predicat principal de l'algorithme :
 
 %*******************************************************************************
 
-main :-
-	% initialisations Pf, Pu et Q 
-
-	% lancement de Aetoile
-
-	true.   %********
-			% A FAIRE
-			%********
 
 
 

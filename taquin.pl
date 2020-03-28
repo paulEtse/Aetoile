@@ -20,33 +20,30 @@
 initial_state([ [b, h, c],       % C'EST L'EXEMPLE PRIS EN COURS
                 [a, f, d],       % 
                 [g,vide,e] ]).   % h1=4,   h2=5,   f*=5
-
 */
-
 % AUTRES EXEMPLES POUR LES TESTS DE  A*
 
-/*
+
 initial_state([ [ a, b, c],        
                 [ vide, h, d],
-                [g,f, e] ]). % h2=2, f*=2*/
-
+                [g,f, e] ]). % h2=2, f*=2
+/*
 initial_state([ [b, c, d],
                 [a,vide,g],
                 [f, h, e]  ]). % h2=10 f*=10
-/*			
+
 initial_state([ [f, g, a],
                 [h,vide,b],
                 [d, c, e]  ]). % h2=16, f*=20
-			
+ 
 initial_state([ [e, f, g],
                 [d,vide,h],
                 [c, b, a]  ]). % h2=24, f*=30 
-
 initial_state([ [a, b, c],
                 [g,vide,d],
                 [h, f, e]]). % etat non connexe avec l'etat final (PAS DE SOLUTION)
-*/  
-
+ 
+*/
 
    %******************
    % ETAT FINAL DU JEU
@@ -191,8 +188,8 @@ diffMat([L1|R1],[L2|R2],N):-
    N is N1 + N2.
 
 heuristique1(U, H) :-
-   final_state(Final),
-   diffMat(U,Final,H).
+   liste_Mal(U,L),
+   length(L,H).
 
 mal_place(U,P1):-
    final_state(Fin),
@@ -243,7 +240,7 @@ bien_place(P):-
 couple([A,S]):-
    initial_state(Init),
    rule(A,1,Init,S).
-main():-
+exe:-
    initial_state(S0),
    heuristique(S0,H0),
    empty(Pue),
@@ -252,31 +249,33 @@ main():-
    insert([ [H0,H0,0], S0 ],Pfe,Pf),
    insert([S0, [H0,H0,0], nil, nil],Pue,Pu),
    aetoile(Pf,Pu,Q).
+
+
 aetoile(Pf,Pu,_):-
    empty(Pf),
    empty(Pu),
    display("PAS de SOLUTION : L’ETAT FINAL N’EST PAS ACCESSIBLE !").
 
-aetoile(Pf,Pu,Q):-
+aetoile(Pf,_,Q):-
    final_state(Final),
-   suppress_min([[Fu,Hu,Gu],U],Pf,Pf2),
+   suppress_min([_,U],Pf,_),
    U=Final,
    affiche_solution(Q,Final).
 
 aetoile(Pf,Pu,Q):-
    suppress_min([[Fu,Hu,Gu],U],Pf,Pf2),
    suppress([U,[Fu,Hu,Gu],Pere,Action],Pu,Pu2),
-   findall(S,expand(U,Gu,S),Ls),
-   loop_successors(Ls,Pu2,Pf2,Q,Puu,Pff),
    insert([U,[Fu,Hu,Gu],Pere,Action],Q,Qf),
+   findall(S,expand(U,Gu,S),Ls),
+   loop_successors(Ls,Pu2,Pf2,Qf,Puu,Pff),
    aetoile(Pff,Puu,Qf).
 
-expand(S,G,Suiv):-
-   rule(Action,1,S,S2),
-   heuristique(S2,H2),
+expand(Pere,G,Suiv):-
+   rule(Action,1,Pere,Fils),
+   heuristique(Fils,H2),
    G2 is G+1,
    F2 is G2+H2,
-   Suiv=[S2,[F2,H2,G2],S,Action].
+   Suiv=[Fils,[F2,H2,G2],Pere,Action].
 loop_successors([],Pu,Pf,_,Pu,Pf).
 loop_successors(Ls,Pu,Q,Pf,PU,PF):-
    Ls=[S|Lsuiv],
@@ -288,10 +287,11 @@ loop_successors(Ls,Pu,Q,Pf,PU,PF):-
       (
          Vec @> [F,H,G] ->
             suppress([U,_,_,_],Pu1,Pu2),
-            suppress([Vect,U],Pf1,Pf2),
+            suppress([_,U],Pf1,Pf2),
             insert(S,Pu2,PU),
             insert([[F,H,G],U],Pf2,PF);
-            true
+            PU = Pu1,
+            PF = Pf1
       )
    ;
       insert(S,Pu1,PU),
@@ -299,12 +299,7 @@ loop_successors(Ls,Pu,Q,Pf,PU,PF):-
    );
    PU = Pu1,
    PF = Pf1
-   ).
-
-
-
-
-
+   ). 
 affiche_solution(_,Init):-
    initial_state(Init),
    write_state(Init),
